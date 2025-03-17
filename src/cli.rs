@@ -133,7 +133,7 @@ pub enum Commands {
         schema: PathBuf,
         
         /// 列定义文件格式（csv或json）
-        #[arg(short, long, value_enum)]
+        #[arg(short = 'f', long, value_enum)]
         schema_format: SchemaFormat,
         
         /// 输出文件路径
@@ -141,7 +141,7 @@ pub enum Commands {
         output: PathBuf,
         
         /// 输出格式（csv、json或parquet）
-        #[arg(short, long, value_enum)]
+        #[arg(short = 'm', long, value_enum)]
         format: OutputFormat,
         
         /// 生成的行数

@@ -59,13 +59,17 @@ transmuta csv --input data.csv --output data.parquet --format parquet
 生成随机数据，需要提供列定义文件（CSV或JSON格式）：
 
 ```bash
-transmuta datagen --schema schema.csv --schema-format csv --output data.csv --format csv
-transmuta datagen --schema schema.json --schema-format json --output data.json --format json
+transmuta data-gen --schema schema.csv --schema-format csv --output data.csv --format csv
+transmuta data-gen -s schema.json -f json -o data.json -m json
 ```
 
 支持的选项：
-- `--rows`：生成的行数，默认为1000
-- `--delimiter`：CSV分隔符，默认为`,`
+- `-s, --schema`：列定义文件路径
+- `-f, --schema-format`：列定义文件格式（csv或json）
+- `-o, --output`：输出文件路径
+- `-m, --format`：输出格式（csv、json或parquet）
+- `-r, --rows`：生成的行数，默认为1000
+- `-d, --delimiter`：CSV分隔符，默认为`,`
 - `--seed`：随机数种子，用于生成可重复的随机数据
 
 #### 列定义格式
