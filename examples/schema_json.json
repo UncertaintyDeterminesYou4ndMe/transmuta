@@ -1,0 +1,26 @@
+[
+  {
+    "name": "姓名",
+    "data_type": "string"
+  },
+  {
+    "name": "年龄",
+    "data_type": "integer"
+  },
+  {
+    "name": "工资",
+    "data_type": "float"
+  },
+  {
+    "name": "在职",
+    "data_type": "boolean"
+  },
+  {
+    "name": "入职日期",
+    "data_type": "date"
+  },
+  {
+    "name": "最后登录",
+    "data_type": "timestamp"
+  }
+] 

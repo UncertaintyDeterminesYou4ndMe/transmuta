@@ -1,0 +1,6 @@
+姓名,string
+年龄,integer
+工资,float
+在职,boolean
+入职日期,date
+最后登录,timestamp 
