@@ -100,11 +100,39 @@ JSON格式的列定义：
 
 支持的数据类型：
 - `string`：字符串
-- `integer`：整数
-- `float`：浮点数
-- `boolean`：布尔值
+- `integer` / `int`：通用整数类型（向后兼容）
+- `float` / `double`：通用浮点数类型（向后兼容）
+- `boolean` / `bool`：布尔值
 - `date`：日期
 - `timestamp`：时间戳
+
+精确数值类型：
+- `int8` / `tinyint`：8位有符号整数，范围 -128 到 127
+- `int16` / `smallint`：16位有符号整数，范围 -32,768 到 32,767
+- `int32` / `int`：32位有符号整数
+- `int64` / `bigint`：64位有符号整数
+- `uint8` / `utinyint`：8位无符号整数，范围 0 到 255
+- `uint16` / `usmallint`：16位无符号整数，范围 0 到 65,535
+- `uint32` / `uint`：32位无符号整数
+- `uint64` / `ubigint`：64位无符号整数
+- `float32` / `real`：32位单精度浮点数
+- `float64` / `double precision`：64位双精度浮点数
+- `decimal` / `numeric`：高精度小数（使用字符串存储）
+- `decimal128`：128位高精度小数
+- `decimal256`：256位高精度小数
+
+时间类型：
+- `date32`：天数表示的日期（从UNIX纪元开始的天数）
+- `time32`：秒或毫秒精度的时间（一天内的时间）
+- `time64`：微秒或纳秒精度的时间
+- `interval`：时间间隔（月、日、纳秒）
+- `duration`：持续时间（纳秒）
+
+二进制和特殊类型：
+- `binary` / `varbinary`：可变长度二进制数据
+- `fixedsizebinary`：固定长度二进制数据（默认16字节）
+- `uuid`：通用唯一标识符
+- `null`：空值类型
 
 ## 许可证
 

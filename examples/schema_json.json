@@ -22,5 +22,65 @@
   {
     "name": "最后登录",
     "data_type": "timestamp"
+  },
+  {
+    "name": "身高(cm)",
+    "data_type": "float32"
+  },
+  {
+    "name": "体重(kg)",
+    "data_type": "float64"
+  },
+  {
+    "name": "部门编号",
+    "data_type": "int16"
+  },
+  {
+    "name": "职位编号",
+    "data_type": "int32"
+  },
+  {
+    "name": "工号",
+    "data_type": "int64"
+  },
+  {
+    "name": "安全等级",
+    "data_type": "uint8"
+  },
+  {
+    "name": "绩效等级",
+    "data_type": "uint16"
+  },
+  {
+    "name": "工资小数",
+    "data_type": "decimal"
+  },
+  {
+    "name": "工作时长(min)",
+    "data_type": "time32"
+  },
+  {
+    "name": "详细工作记录(ns)",
+    "data_type": "time64"
+  },
+  {
+    "name": "薪资调整周期",
+    "data_type": "interval"
+  },
+  {
+    "name": "工作年限",
+    "data_type": "duration"
+  },
+  {
+    "name": "二进制头像",
+    "data_type": "binary"
+  },
+  {
+    "name": "指纹数据",
+    "data_type": "fixedsizebinary"
+  },
+  {
+    "name": "员工UUID",
+    "data_type": "uuid"
   }
 ] 
