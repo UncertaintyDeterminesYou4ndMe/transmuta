@@ -21,6 +21,14 @@ impl std::fmt::Display for OutputFormat {
     }
 }
 
+#[derive(Debug, Clone, ValueEnum)]
+pub enum SchemaFormat {
+    /// CSV格式的列定义
+    Csv,
+    /// JSON格式的列定义
+    Json,
+}
+
 #[derive(Parser, Debug)]
 #[command(
     name = "transmuta",
@@ -116,5 +124,36 @@ pub enum Commands {
         /// CSV是否有标题行
         #[arg(long, default_value = "true")]
         has_header: bool,
+    },
+    
+    /// 生成随机数据
+    DataGen {
+        /// 列定义文件路径（CSV或JSON格式）
+        #[arg(short, long, value_name = "SCHEMA_FILE")]
+        schema: PathBuf,
+        
+        /// 列定义文件格式（csv或json）
+        #[arg(short, long, value_enum)]
+        schema_format: SchemaFormat,
+        
+        /// 输出文件路径
+        #[arg(short, long, value_name = "OUTPUT_FILE")]
+        output: PathBuf,
+        
+        /// 输出格式（csv、json或parquet）
+        #[arg(short, long, value_enum)]
+        format: OutputFormat,
+        
+        /// 生成的行数
+        #[arg(short, long, default_value = "1000")]
+        rows: usize,
+        
+        /// CSV分隔符（当输入或输出为CSV时使用），支持特殊字符如\t表示制表符
+        #[arg(short, long, default_value = ",", value_parser = parse_delimiter)]
+        delimiter: char,
+        
+        /// 随机数据种子，用于生成可重复的随机数据，默认为当前时间
+        #[arg(long)]
+        seed: Option<u64>,
     },
 } 

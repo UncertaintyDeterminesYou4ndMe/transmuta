@@ -46,6 +46,20 @@ fn main() -> Result<()> {
                 return Err(e.into());
             }
         }
+        Commands::DataGen { schema, schema_format, output, format, rows, delimiter, seed } => {
+            if let Err(e) = converters::datagen::generate_data(
+                &schema,
+                &schema_format,
+                &output,
+                &format,
+                rows,
+                delimiter,
+                seed
+            ) {
+                error!("生成随机数据失败: {}", e);
+                return Err(e.into());
+            }
+        }
     }
 
     Ok(())
