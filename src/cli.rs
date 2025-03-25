@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum OutputFormat {
@@ -147,7 +147,7 @@ pub enum Commands {
         schema: PathBuf,
         
         /// 列定义文件格式（csv或json）
-        #[arg(short, long, value_enum)]
+        #[arg(short = 'm', long, value_enum)]
         schema_format: SchemaFormat,
         
         /// 输出文件路径（如果不指定--format，将从文件扩展名推断输出格式）

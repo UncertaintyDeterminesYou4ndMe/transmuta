@@ -68,16 +68,16 @@ transmuta csv --input data.csv --output data.parquet
 
 ```bash
 # 格式会从输出文件扩展名自动推断
-transmuta data-gen --schema schema.csv --schema-format csv --output data.csv
-transmuta data-gen -s schema.json --schema-format json -o data.json
+transmuta data-gen --schema schema.csv -m csv --output data.csv
+transmuta data-gen -s schema.json -m json -o data.json
 
 # 也可以显式指定输出格式
-transmuta data-gen -s schema.json --schema-format json -o data.out --format json
+transmuta data-gen -s schema.json -m json -o data.out -f json
 ```
 
 支持的选项：
 - `-s, --schema`：列定义文件路径
-- `--schema-format`：列定义文件格式（csv或json）
+- `-m, --schema-format`：列定义文件格式（csv或json）
 - `-o, --output`：输出文件路径
 - `-f, --format`：输出格式，可选，如不指定则从输出文件扩展名推断（csv、json、parquet）
 - `-r, --rows`：生成的行数，默认为1000
