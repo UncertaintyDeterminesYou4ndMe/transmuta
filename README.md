@@ -5,6 +5,7 @@
 ## 功能特点
 
 - 支持Excel（xlsx、xls、xlsm）、CSV、JSON和Parquet格式的互相转换
+- 自动从输出文件扩展名推断输出格式
 - 批量处理大型文件，自动分片处理
 - 提供进度显示
 - 支持多线程处理
@@ -30,12 +31,17 @@ cargo build --release
 ### Excel转换
 
 ```bash
-transmuta excel --input data.xlsx --output data.csv --format csv
-transmuta excel --input data.xlsx --output data.json --format json
-transmuta excel --input data.xlsx --output data.parquet --format parquet
+# 格式会从输出文件扩展名自动推断
+transmuta excel --input data.xlsx --output data.csv
+transmuta excel --input data.xlsx --output data.json
+transmuta excel --input data.xlsx --output data.parquet
+
+# 也可以显式指定输出格式
+transmuta excel --input data.xlsx --output data.out --format csv
 ```
 
 支持的选项：
+- `--format`：输出格式，可选，如不指定则从输出文件扩展名推断（csv、json、parquet）
 - `--delimiter`：CSV分隔符，默认为`,`
 - `--batch-size`：批处理大小，默认10000行
 - `--threads`：线程数，默认为CPU核心数
@@ -44,11 +50,13 @@ transmuta excel --input data.xlsx --output data.parquet --format parquet
 ### CSV转换
 
 ```bash
-transmuta csv --input data.csv --output data.json --format json
-transmuta csv --input data.csv --output data.parquet --format parquet
+# 格式会从输出文件扩展名自动推断
+transmuta csv --input data.csv --output data.json
+transmuta csv --input data.csv --output data.parquet
 ```
 
 支持的选项：
+- `--format`：输出格式，可选，如不指定则从输出文件扩展名推断（csv、json、parquet）
 - `--delimiter`：CSV分隔符，默认为`,`
 - `--batch-size`：批处理大小，默认10000行
 - `--threads`：线程数，默认为CPU核心数
@@ -59,15 +67,19 @@ transmuta csv --input data.csv --output data.parquet --format parquet
 生成随机数据，需要提供列定义文件（CSV或JSON格式）：
 
 ```bash
-transmuta data-gen --schema schema.csv --schema-format csv --output data.csv --format csv
-transmuta data-gen -s schema.json -f json -o data.json -m json
+# 格式会从输出文件扩展名自动推断
+transmuta data-gen --schema schema.csv --schema-format csv --output data.csv
+transmuta data-gen -s schema.json --schema-format json -o data.json
+
+# 也可以显式指定输出格式
+transmuta data-gen -s schema.json --schema-format json -o data.out --format json
 ```
 
 支持的选项：
 - `-s, --schema`：列定义文件路径
-- `-f, --schema-format`：列定义文件格式（csv或json）
+- `--schema-format`：列定义文件格式（csv或json）
 - `-o, --output`：输出文件路径
-- `-m, --format`：输出格式（csv、json或parquet）
+- `-f, --format`：输出格式，可选，如不指定则从输出文件扩展名推断（csv、json、parquet）
 - `-r, --rows`：生成的行数，默认为1000
 - `-d, --delimiter`：CSV分隔符，默认为`,`
 - `--seed`：随机数种子，用于生成可重复的随机数据
