@@ -29,6 +29,26 @@ pub enum SchemaFormat {
     Json,
 }
 
+#[derive(Debug, Clone, ValueEnum)]
+pub enum DiffOutputMode {
+    /// 并集：两个文件中所有的字段
+    Union,
+    /// 补集：在文件1或文件2中出现但不同时出现在两个文件中的字段
+    Complement,
+    /// 差集（以文件1为基准）：将文件2独有的字段添加到文件1
+    DiffBasedOnFile1,
+    /// 差集（以文件2为基准）：将文件1独有的字段添加到文件2
+    DiffBasedOnFile2,
+    /// 仅文件1有的字段（文件1 - 文件2）
+    OnlyInFile1,
+    /// 仅文件2有的字段（文件2 - 文件1）
+    OnlyInFile2,
+    /// 重新排序文件1的字段（不增减字段）
+    SortFile1,
+    /// 重新排序文件2的字段（不增减字段）
+    SortFile2,
+}
+
 #[derive(Parser, Debug)]
 #[command(
     name = "transmuta",
@@ -169,5 +189,40 @@ pub enum Commands {
         /// 随机数据种子，用于生成可重复的随机数据，默认为当前时间
         #[arg(long)]
         seed: Option<u64>,
+    },
+    
+    /// 比较两个文件的字段差异
+    Diff {
+        /// 输入文件1路径
+        #[arg(short = '1', long, value_name = "FILE1")]
+        input1: PathBuf,
+        
+        /// 输入文件2路径
+        #[arg(short = '2', long, value_name = "FILE2")]
+        input2: PathBuf,
+        
+        /// 输出文件路径
+        #[arg(short, long, value_name = "OUTPUT_FILE")]
+        output: PathBuf,
+        
+        /// 差异输出模式
+        #[arg(short = 'm', long, value_enum, default_value = "union")]
+        mode: DiffOutputMode,
+        
+        /// 字段分隔符，支持特殊字符如\t表示制表符
+        #[arg(short = 'd', long, default_value = ",", value_parser = parse_delimiter)]
+        delimiter: char,
+        
+        /// 输出详细的差异报告到指定文件
+        #[arg(short = 'r', long, value_name = "REPORT_FILE")]
+        report: Option<PathBuf>,
+        
+        /// 忽略大小写差异
+        #[arg(short = 'i', long)]
+        ignore_case: bool,
+        
+        /// 忽略空白字符差异
+        #[arg(short = 'w', long)]
+        ignore_whitespace: bool,
     },
 } 
