@@ -39,14 +39,14 @@ pub enum DiffOutputMode {
     DiffBasedOnFile1,
     /// 差集（以文件2为基准）：将文件1独有的字段添加到文件2
     DiffBasedOnFile2,
-    /// 仅文件1有的字段（文件1 - 文件2）
+    /// 仅保留文件1独有的字段
     OnlyInFile1,
-    /// 仅文件2有的字段（文件2 - 文件1）
+    /// 仅保留文件2独有的字段
     OnlyInFile2,
-    /// 重新排序文件1的字段（不增减字段）
-    SortFile1,
-    /// 重新排序文件2的字段（不增减字段）
-    SortFile2,
+    /// 原文件1的所有字段（按字母排序）
+    SortedFile1,
+    /// 原文件2的所有字段（按字母排序）
+    SortedFile2,
 }
 
 #[derive(Parser, Debug)]
@@ -224,5 +224,9 @@ pub enum Commands {
         /// 忽略空白字符差异
         #[arg(short = 'w', long)]
         ignore_whitespace: bool,
+        
+        /// 将每行作为一个单独的字段读取（适用于每个字段占一行的文件）
+        #[arg(short = 'l', long)]
+        one_field_per_line: bool,
     },
 } 

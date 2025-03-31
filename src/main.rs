@@ -102,7 +102,7 @@ fn main() -> Result<()> {
                 return Err(e.into());
             }
         }
-        Commands::Diff { input1, input2, output, mode, delimiter, report, ignore_case, ignore_whitespace } => {
+        Commands::Diff { input1, input2, output, mode, delimiter, report, ignore_case, ignore_whitespace, one_field_per_line } => {
             if let Err(e) = converters::diff::diff_fields(
                 &input1,
                 &input2,
@@ -114,14 +114,15 @@ fn main() -> Result<()> {
                     cli::DiffOutputMode::DiffBasedOnFile2 => converters::diff::DiffOutputMode::DiffBasedOnFile2,
                     cli::DiffOutputMode::OnlyInFile1 => converters::diff::DiffOutputMode::OnlyInFile1,
                     cli::DiffOutputMode::OnlyInFile2 => converters::diff::DiffOutputMode::OnlyInFile2,
-                    cli::DiffOutputMode::SortFile1 => converters::diff::DiffOutputMode::SortFile1,
-                    cli::DiffOutputMode::SortFile2 => converters::diff::DiffOutputMode::SortFile2,
+                    cli::DiffOutputMode::SortedFile1 => converters::diff::DiffOutputMode::SortedFile1,
+                    cli::DiffOutputMode::SortedFile2 => converters::diff::DiffOutputMode::SortedFile2,
                 },
                 converters::diff::DiffOptions {
                     delimiter,
                     ignore_case,
                     ignore_whitespace,
                     report_path: report.as_deref(),
+                    one_field_per_line,
                 }
             ) {
                 error!("比较字段差异失败: {}", e);

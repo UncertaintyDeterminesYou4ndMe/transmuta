@@ -16,14 +16,14 @@ pub enum DiffOutputMode {
     DiffBasedOnFile1,
     /// 差集（以文件2为基准）：将文件1独有的字段添加到文件2
     DiffBasedOnFile2,
-    /// 仅文件1有的字段（文件1 - 文件2）
+    /// 仅保留文件1独有的字段
     OnlyInFile1,
-    /// 仅文件2有的字段（文件2 - 文件1）
+    /// 仅保留文件2独有的字段
     OnlyInFile2,
-    /// 重新排序文件1的字段（不增减字段）
-    SortFile1,
-    /// 重新排序文件2的字段（不增减字段）
-    SortFile2,
+    /// 原文件1的所有字段（按字母排序）
+    SortedFile1,
+    /// 原文件2的所有字段（按字母排序）
+    SortedFile2,
 }
 
 /// 用于字段比较的选项
@@ -37,6 +37,8 @@ pub struct DiffOptions<'a> {
     pub ignore_whitespace: bool,
     /// 详细报告输出路径
     pub report_path: Option<&'a Path>,
+    /// 是否将每行作为一个单独的字段读取（而不是将第一行按分隔符拆分）
+    pub one_field_per_line: bool,
 }
 
 /// 标准化字段名称，应用忽略选项
@@ -69,19 +71,34 @@ fn read_fields_from_file<'a>(file_path: &Path, options: &DiffOptions<'a>) -> Res
     let reader = BufReader::new(file);
     let mut fields = Vec::new();
     
-    // 假设第一行是字段列表
-    if let Some(line) = reader.lines().next() {
-        let line = line.map_err(|e| anyhow!("读取文件 {} 首行失败: {}", file_path.display(), e))?;
-        
-        // 分割字段并应用标准化处理
-        for field in line.split(options.delimiter) {
+    if options.one_field_per_line {
+        // 每行作为一个字段
+        for line_result in reader.lines() {
+            let line = line_result.map_err(|e| anyhow!("读取文件 {} 行失败: {}", file_path.display(), e))?;
+            
+            // 去掉行尾的分隔符（通常是逗号）
+            let field = line.trim_end_matches(options.delimiter);
+            
             let normalized = normalize_field(field, options);
             if !normalized.is_empty() {
                 fields.push(normalized);
             }
         }
     } else {
-        return Err(anyhow!("文件 {} 为空", file_path.display()));
+        // 假设第一行是字段列表，按分隔符拆分
+        if let Some(line) = reader.lines().next() {
+            let line = line.map_err(|e| anyhow!("读取文件 {} 首行失败: {}", file_path.display(), e))?;
+            
+            // 分割字段并应用标准化处理
+            for field in line.split(options.delimiter) {
+                let normalized = normalize_field(field, options);
+                if !normalized.is_empty() {
+                    fields.push(normalized);
+                }
+            }
+        } else {
+            return Err(anyhow!("文件 {} 为空", file_path.display()));
+        }
     }
     
     // 排序字段以便双指针比较
@@ -284,8 +301,8 @@ pub fn diff_fields<'a>(
         },
         DiffOutputMode::OnlyInFile1 => only_in_1.clone(),
         DiffOutputMode::OnlyInFile2 => only_in_2.clone(),
-        DiffOutputMode::SortFile1 => fields1.clone(),
-        DiffOutputMode::SortFile2 => fields2.clone(),
+        DiffOutputMode::SortedFile1 => fields1.clone(),
+        DiffOutputMode::SortedFile2 => fields2.clone(),
     };
     
     // 写入输出文件
