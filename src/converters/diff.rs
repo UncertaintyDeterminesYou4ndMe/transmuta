@@ -184,29 +184,39 @@ fn generate_diff_report(
     let mut file = File::create(output_path)
         .map_err(|e| anyhow!("无法创建报告文件 {}: {}", output_path.display(), e))?;
     
+    // 获取文件名
+    let file1_name = input_file1.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or_else(|| input_file1.to_str().unwrap_or("未知文件1"));
+    
+    let file2_name = input_file2.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or_else(|| input_file2.to_str().unwrap_or("未知文件2"));
+    
     // 编写报告标题
     writeln!(file, "字段差异比较报告")?;
     writeln!(file, "==================")?;
     writeln!(file, "")?;
     
-    // 文件信息
-    writeln!(file, "文件1: {}", input_file1.display())?;
-    writeln!(file, "文件2: {}", input_file2.display())?;
+    // 文件信息，显示完整路径
+    writeln!(file, "文件路径:")?;
+    writeln!(file, "{}: {}", file1_name, input_file1.display())?;
+    writeln!(file, "{}: {}", file2_name, input_file2.display())?;
     writeln!(file, "")?;
     
     // 差异统计
     writeln!(file, "差异统计")?;
     writeln!(file, "--------")?;
-    writeln!(file, "文件1字段数: {}", original_fields1.len())?;
-    writeln!(file, "文件2字段数: {}", original_fields2.len())?;
+    writeln!(file, "{}字段数: {}", file1_name, original_fields1.len())?;
+    writeln!(file, "{}字段数: {}", file2_name, original_fields2.len())?;
     writeln!(file, "两个文件共有字段数: {}", common_count)?;
-    writeln!(file, "仅在文件1中的字段数: {}", only_in_1.len())?;
-    writeln!(file, "仅在文件2中的字段数: {}", only_in_2.len())?;
+    writeln!(file, "仅在{}中的字段数: {}", file1_name, only_in_1.len())?;
+    writeln!(file, "仅在{}中的字段数: {}", file2_name, only_in_2.len())?;
     writeln!(file, "")?;
     
     // 仅在文件1中的字段
-    writeln!(file, "仅在文件1中的字段")?;
-    writeln!(file, "----------------")?;
+    writeln!(file, "仅在{}中的字段", file1_name)?;
+    writeln!(file, "{}", "-".repeat(12 + file1_name.len()))?;
     for field in only_in_1 {
         writeln!(file, "- {}", field)?;
     }
@@ -216,8 +226,8 @@ fn generate_diff_report(
     writeln!(file, "")?;
     
     // 仅在文件2中的字段
-    writeln!(file, "仅在文件2中的字段")?;
-    writeln!(file, "----------------")?;
+    writeln!(file, "仅在{}中的字段", file2_name)?;
+    writeln!(file, "{}", "-".repeat(12 + file2_name.len()))?;
     for field in only_in_2 {
         writeln!(file, "- {}", field)?;
     }
@@ -227,15 +237,15 @@ fn generate_diff_report(
     writeln!(file, "")?;
     
     // 两个文件的完整字段列表
-    writeln!(file, "文件1的完整字段列表")?;
-    writeln!(file, "------------------")?;
+    writeln!(file, "{}的完整字段列表", file1_name)?;
+    writeln!(file, "{}", "-".repeat(16 + file1_name.len()))?;
     for field in original_fields1 {
         writeln!(file, "- {}", field)?;
     }
     writeln!(file, "")?;
     
-    writeln!(file, "文件2的完整字段列表")?;
-    writeln!(file, "------------------")?;
+    writeln!(file, "{}的完整字段列表", file2_name)?;
+    writeln!(file, "{}", "-".repeat(16 + file2_name.len()))?;
     for field in original_fields2 {
         writeln!(file, "- {}", field)?;
     }
@@ -253,6 +263,15 @@ pub fn diff_fields<'a>(
     mode: DiffOutputMode,
     options: DiffOptions<'a>,
 ) -> Result<()> {
+    // 获取文件名
+    let file1_name = input_file1.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or_else(|| input_file1.to_str().unwrap_or("未知文件1"));
+    
+    let file2_name = input_file2.file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or_else(|| input_file2.to_str().unwrap_or("未知文件2"));
+    
     info!("正在比较文件 {} 和 {} 的字段差异", input_file1.display(), input_file2.display());
     
     // 读取两个文件的字段
@@ -263,8 +282,8 @@ pub fn diff_fields<'a>(
     let original_fields1 = fields1.clone();
     let original_fields2 = fields2.clone();
     
-    info!("文件1字段数: {}", fields1.len());
-    info!("文件2字段数: {}", fields2.len());
+    info!("{}字段数: {}", file1_name, fields1.len());
+    info!("{}字段数: {}", file2_name, fields2.len());
     
     // 计算差异
     let (union, only_in_1, only_in_2) = compute_diff(&fields1, &fields2);
@@ -274,8 +293,8 @@ pub fn diff_fields<'a>(
     
     info!("两个文件字段并集数: {}", union.len());
     info!("两个文件共有字段数: {}", common_count);
-    info!("仅在文件1中的字段数: {}", only_in_1.len());
-    info!("仅在文件2中的字段数: {}", only_in_2.len());
+    info!("仅在{}中的字段数: {}", file1_name, only_in_1.len());
+    info!("仅在{}中的字段数: {}", file2_name, only_in_2.len());
     
     // 根据输出模式生成结果
     let output_fields = match mode {
