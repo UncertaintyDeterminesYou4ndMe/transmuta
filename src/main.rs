@@ -5,7 +5,7 @@ mod utils;
 
 use anyhow::Result;
 use clap::Parser;
-use cli::{Cli, Commands, OutputFormat};
+use cli::{Cli, Commands, OutputFormat, DiffOutputMode};
 use log::{error, info, warn};
 use std::path::Path;
 
@@ -99,6 +99,33 @@ fn main() -> Result<()> {
                 seed
             ) {
                 error!("生成随机数据失败: {}", e);
+                return Err(e.into());
+            }
+        }
+        Commands::Diff { input1, input2, output, mode, delimiter, report, ignore_case, ignore_whitespace, one_field_per_line } => {
+            if let Err(e) = converters::diff::diff_fields(
+                &input1,
+                &input2,
+                &output,
+                match mode {
+                    cli::DiffOutputMode::Union => converters::diff::DiffOutputMode::Union,
+                    cli::DiffOutputMode::Complement => converters::diff::DiffOutputMode::Complement,
+                    cli::DiffOutputMode::DiffBasedOnFile1 => converters::diff::DiffOutputMode::DiffBasedOnFile1,
+                    cli::DiffOutputMode::DiffBasedOnFile2 => converters::diff::DiffOutputMode::DiffBasedOnFile2,
+                    cli::DiffOutputMode::OnlyInFile1 => converters::diff::DiffOutputMode::OnlyInFile1,
+                    cli::DiffOutputMode::OnlyInFile2 => converters::diff::DiffOutputMode::OnlyInFile2,
+                    cli::DiffOutputMode::SortedFile1 => converters::diff::DiffOutputMode::SortedFile1,
+                    cli::DiffOutputMode::SortedFile2 => converters::diff::DiffOutputMode::SortedFile2,
+                },
+                converters::diff::DiffOptions {
+                    delimiter,
+                    ignore_case,
+                    ignore_whitespace,
+                    report_path: report.as_deref(),
+                    one_field_per_line,
+                }
+            ) {
+                error!("比较字段差异失败: {}", e);
                 return Err(e.into());
             }
         }
