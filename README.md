@@ -146,6 +146,34 @@ JSON格式的列定义：
 - `uuid`：通用唯一标识符
 - `null`：空值类型
 
+### Diff工具
+
+差异比较工具允许比较两个数据文件的内容，帮助识别它们之间的差异。
+
+```bash
+# 比较两个CSV文件
+transmuta diff --input1 file1.csv --input2 file2.csv --output diff_result.json
+
+# 使用自定义设置比较不同格式的文件
+transmuta diff --input1 file1.json --input2 file2.csv --output diff_result.csv --key-columns id,name
+```
+
+支持的选项：
+- `--input1`：第一个（基准）文件路径
+- `--input2`：第二个（比较）文件路径
+- `--output`：差异结果输出文件路径
+- `--format`：输出格式，可选，如不指定则从输出文件扩展名推断（csv、json）
+- `--key-columns`：用于匹配记录的键列名，以逗号分隔
+- `--ignore-columns`：比较时忽略的列名，以逗号分隔
+- `--tolerance`：浮点数比较的容差值，默认为0.0001
+- `--case-sensitive`：字符串比较是否区分大小写，默认为true
+
+输出结果包含以下信息：
+- 仅在左侧文件中存在的记录
+- 仅在右侧文件中存在的记录
+- 在两侧都存在但有差异的记录（以及具体差异内容）
+- 差异统计信息
+
 ## 许可证
 
 MIT License

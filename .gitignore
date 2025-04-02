@@ -2,3 +2,4 @@
 /examples/diff/
 *.csv
 *.txt
+dist/
