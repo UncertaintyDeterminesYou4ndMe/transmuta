@@ -120,6 +120,17 @@ pub fn convert_excel(
             }).collect::<Vec<Field>>()
         );
         
+        // 由于第skip_rows行已经用作标题，实际数据行数减1
+        let effective_row_count = effective_row_count - 1;
+        // 检查是否还有数据行可以处理
+        if effective_row_count <= 0 {
+            return Err(TransmutaError::DataProcessingError(format!(
+                "工作表中没有数据行可以处理，总行数({})减去跳过的行数({})再减去表头行后小于等于0", 
+                row_count, skip_rows
+            )));
+        }
+        // 更新进度条总行数以反映实际数据行数
+        pb.set_length(effective_row_count as u64);
         // 计算批次数
         let batch_count = (effective_row_count + batch_size - 1) / batch_size;
         info!("将数据分为{}个批次处理，每批次{}行", batch_count, batch_size);
@@ -131,8 +142,9 @@ pub fn convert_excel(
         let mut processed_rows = 0;
         
         for batch_idx in 0..batch_count {
-            let start_row = skip_rows + batch_idx * batch_size;
-            let end_row = std::cmp::min(skip_rows + (batch_idx + 1) * batch_size, row_count);
+            // 数据从标题行的下一行开始
+            let start_row = skip_rows + 1 + batch_idx * batch_size;
+            let end_row = std::cmp::min(skip_rows + 1 + (batch_idx + 1) * batch_size, row_count);
             let current_batch_size = end_row - start_row;
             
             debug!("处理批次 {}/{}: 行 {} 到 {}", batch_idx + 1, batch_count, start_row, end_row - 1);

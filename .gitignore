@@ -3,3 +3,13 @@
 *.csv
 *.txt
 dist/
+
+# 编辑器 / 系统
+.DS_Store
+.idea/
+.cursor/
+
+# npm 本地模拟与产物
+npm/node_modules/
+npm/platforms/*/bin/
+*.tgz
