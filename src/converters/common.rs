@@ -4,6 +4,7 @@ use std::path::Path;
 use arrow::array::*;
 use arrow::datatypes::*;
 use arrow::record_batch::RecordBatch;
+use arrow::util::display::{ArrayFormatter, FormatOptions};
 use parquet::file::properties::WriterProperties;
 use parquet::arrow::ArrowWriter;
 use std::fs::File;
@@ -113,6 +114,17 @@ pub fn save_data(
     Ok(())
 }
 
+/// 兜底：用 Arrow 自带的 ArrayFormatter 规范地格式化单个值。
+/// 覆盖那些上面未显式列出的类型（Binary/Time32/Time64/Decimal/Duration/
+/// FixedSizeBinary/LargeUtf8 等），避免回退到 `{:?}` 打印整个数组的 Debug 串。
+fn fallback_value_to_string(array: &ArrayRef, index: usize) -> String {
+    let options = FormatOptions::default();
+    match ArrayFormatter::try_new(array.as_ref(), &options) {
+        Ok(formatter) => formatter.value(index).to_string(),
+        Err(_) => String::new(),
+    }
+}
+
 /// 将数组元素转换为字符串
 fn array_value_to_string(array: &ArrayRef, index: usize) -> String {
     if array.is_null(index) {
@@ -171,7 +183,9 @@ fn array_value_to_string(array: &ArrayRef, index: usize) -> String {
         }
         DataType::Date32 => {
             let array = array.as_any().downcast_ref::<Date32Array>().unwrap();
-            array.value(index).to_string()
+            array.value_as_date(index)
+                .map(|d| d.format("%Y-%m-%d").to_string())
+                .unwrap_or_else(|| array.value(index).to_string())
         }
         DataType::Date64 => {
             let array = array.as_any().downcast_ref::<Date64Array>().unwrap();
@@ -215,7 +229,7 @@ fn array_value_to_string(array: &ArrayRef, index: usize) -> String {
                 }
             }
         }
-        _ => format!("{:?}", array),
+        _ => fallback_value_to_string(array, index),
     }
 }
 
@@ -277,7 +291,10 @@ fn array_value_to_json(array: &ArrayRef, index: usize) -> Value {
         }
         DataType::Date32 => {
             let array = array.as_any().downcast_ref::<Date32Array>().unwrap();
-            json!(array.value(index).to_string())
+            let s = array.value_as_date(index)
+                .map(|d| d.format("%Y-%m-%d").to_string())
+                .unwrap_or_else(|| array.value(index).to_string());
+            json!(s)
         }
         DataType::Date64 => {
             let array = array.as_any().downcast_ref::<Date64Array>().unwrap();
@@ -326,6 +343,6 @@ fn array_value_to_json(array: &ArrayRef, index: usize) -> Value {
                 }
             }
         }
-        _ => json!(format!("{:?}", array)),
+        _ => json!(fallback_value_to_string(array, index)),
     }
 } 

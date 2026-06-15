@@ -1,178 +1,158 @@
 # Transmuta（传变）
 
-一个用于数据文件格式转换的命令行工具，支持Excel、CSV、JSON和Parquet等格式之间的互相转换。
+纯本地、离线、无网络依赖的数据文件格式转换 CLI，支持 Excel、CSV、JSON、Parquet 之间的互相转换。
+
+**为什么做它**：需要转换格式时，不用再去配 Python 环境、写一次性脚本、反复调试——装上 `transmuta`，一条命令搞定。尤其适合给 AI / 自动化流程直接调用：`transmuta -h` 看一眼就能用。
 
 ## 功能特点
 
-- 支持Excel（xlsx、xls、xlsm）、CSV、JSON和Parquet格式的互相转换
-- 自动从输出文件扩展名推断输出格式
-- 批量处理大型文件，自动分片处理
-- 提供进度显示
-- 支持多线程处理
-- 自动类型推断
-- 支持生成随机测试数据
+- Excel（`.xlsx/.xls/.xlsm/.xlsb`）、CSV/TSV、JSON 作为**源**，CSV、JSON、Parquet 作为**目标**
+- 源 / 目标格式自动从文件扩展名推断，无需手填
+- 全程离线，不联网、不上传任何数据
+- 大文件分批处理、多线程、进度显示
+- 附带文件差异比较（`diff`）与随机测试数据生成（`data-gen`）
 
 ## 安装
 
+### 通过 npm（推荐）
+
 ```bash
-cargo install transmuta
+# 全局安装
+npm install -g transmuta
+transmuta -h
+
+# 或免安装直接用
+npx transmuta convert data.xlsx data.csv
 ```
 
-或者从源码编译：
+安装时 npm 只会拉取与你系统匹配的那个预编译二进制（macOS arm64/x64、Linux x64/arm64），**不需要安装期联网下载或编译**。
+
+### 从源码编译
 
 ```bash
-git clone https://github.com/yourusername/transmuta.git
+git clone https://github.com/UncertaintyDeterminesYou4ndMe/transmuta.git
 cd transmuta
 cargo build --release
+# 产物在 target/release/transmuta
 ```
+
+## 给 AI / 自动化使用
+
+设计上对程序调用友好：
+
+- **零交互**：所有输入通过参数传入，任何情况下都不会弹交互式提示阻塞。
+- **自描述**：`transmuta -h` 与 `transmuta convert -h` 都带可直接复制运行的示例。
+- **输出干净**：转换结果写入目标文件，日志一律走 stderr，stdout 不被污染；用 `-l warn` 或 `-l error` 可进一步降噪。
+- **退出码可判定**：成功为 0，失败为非 0，并在 stderr 给出可操作的错误（如「请用 --from 指定」）。
+
+给 AI 的一句话提示示例：
+
+> 需要转换数据文件格式时，运行 `transmuta -h` 查看用法，然后用 `transmuta convert <输入> <输出>`，不要自己写转换脚本。
 
 ## 使用方法
 
-### Excel转换
+### 格式转换：`convert`
 
 ```bash
-# 格式会从输出文件扩展名自动推断
-transmuta excel --input data.xlsx --output data.csv
-transmuta excel --input data.xlsx --output data.json
-transmuta excel --input data.xlsx --output data.parquet
-
-# 也可以显式指定输出格式
-transmuta excel --input data.xlsx --output data.out --format csv
+transmuta convert <输入文件> <输出文件> [选项]
 ```
 
-支持的选项：
-- `--format`：输出格式，可选，如不指定则从输出文件扩展名推断（csv、json、parquet）
-- `--delimiter`：CSV分隔符，默认为`,`
-- `--batch-size`：批处理大小，默认10000行
-- `--threads`：线程数，默认为CPU核心数
-- `--skip-rows`：跳过前几行，默认为0
-
-### CSV转换
+源 / 目标格式默认从扩展名推断：
 
 ```bash
-# 格式会从输出文件扩展名自动推断
-transmuta csv --input data.csv --output data.json
-transmuta csv --input data.csv --output data.parquet
+transmuta convert data.xlsx data.csv        # Excel → CSV
+transmuta convert data.csv  data.parquet    # CSV   → Parquet
+transmuta convert data.json data.csv        # JSON  → CSV
+transmuta convert data.json out.tsv -d '\t' # 输出 TSV（制表符分隔）
 ```
 
-支持的选项：
-- `--format`：输出格式，可选，如不指定则从输出文件扩展名推断（csv、json、parquet）
-- `--delimiter`：CSV分隔符，默认为`,`
-- `--batch-size`：批处理大小，默认10000行
-- `--threads`：线程数，默认为CPU核心数
-- `--has-header`：是否有标题行，默认为true
-
-### 数据生成
-
-生成随机数据，需要提供列定义文件（CSV或JSON格式）：
+扩展名不足以判断时，用 `--from` / `--to` 显式指定：
 
 ```bash
-# 格式会从输出文件扩展名自动推断
-transmuta data-gen --schema schema.csv -m csv --output data.csv
+transmuta convert in.dat out.dat --from csv --to json
+```
+
+常用选项：
+
+- `--from <FMT>`：源格式，覆盖扩展名推断（`excel`、`csv`、`json`）
+- `--to <FMT>`：目标格式，覆盖扩展名推断（`csv`、`json`、`parquet`）
+- `-d, --delimiter`：CSV/TSV 分隔符，默认 `,`，支持 `\t`（制表符）
+- `--batch-size`：批处理大小，默认 10000
+- `-t, --threads`：线程数，默认为 CPU 核心数
+- `--skip-rows <N>`：跳过开头 N 行（仅 Excel 源生效）
+- `--no-header`：源 CSV 没有表头行（默认认为有表头）
+
+> 说明：当前 Parquet 仅作为**目标**支持（尚无 Parquet 读取）；Excel 仅作为**源**支持（尚不支持写出 Excel）。
+
+### 差异比较：`diff`
+
+比较两个数据文件的字段差异。
+
+```bash
+transmuta diff -1 file1.csv -2 file2.csv -o diff_result.json
+```
+
+主要选项：
+
+- `-1, --input1` / `-2, --input2`：参与比较的两个文件
+- `-o, --output`：差异结果输出路径
+- `-m, --mode`：差异模式（`union`、`complement`、`only-in-file1`、`only-in-file2`、`sorted-file1`、`sorted-file2` 等）
+- `-r, --report`：额外输出详细差异报告
+- `-i, --ignore-case` / `-w, --ignore-whitespace`：忽略大小写 / 空白差异
+- `-l, --one-field-per-line`：把每行作为一个字段读取
+
+### 随机数据生成：`data-gen`
+
+按列定义文件（CSV 或 JSON）生成随机测试数据：
+
+```bash
+transmuta data-gen -s schema.csv -m csv -o data.csv -r 1000
 transmuta data-gen -s schema.json -m json -o data.json
-
-# 也可以显式指定输出格式
-transmuta data-gen -s schema.json -m json -o data.out -f json
 ```
 
-支持的选项：
+主要选项：
+
 - `-s, --schema`：列定义文件路径
-- `-m, --schema-format`：列定义文件格式（csv或json）
+- `-m, --schema-format`：列定义格式（`csv` 或 `json`）
 - `-o, --output`：输出文件路径
-- `-f, --format`：输出格式，可选，如不指定则从输出文件扩展名推断（csv、json、parquet）
-- `-r, --rows`：生成的行数，默认为1000
-- `-d, --delimiter`：CSV分隔符，默认为`,`
-- `--seed`：随机数种子，用于生成可重复的随机数据
+- `-f, --format`：输出格式，可选，默认从扩展名推断
+- `-r, --rows`：生成行数，默认 1000
+- `-d, --delimiter`：CSV 分隔符
+- `--seed`：随机种子，用于可复现的随机数据
 
 #### 列定义格式
 
-CSV格式的列定义（每行包含列名和数据类型）：
+CSV 形式（每行：列名,类型）：
+
 ```
 姓名,string
 年龄,integer
 工资,float
 在职,boolean
 入职日期,date
-最后登录,timestamp
 ```
 
-JSON格式的列定义：
+JSON 形式：
+
 ```json
 [
-  {
-    "name": "姓名",
-    "data_type": "string"
-  },
-  {
-    "name": "年龄",
-    "data_type": "integer"
-  }
+  { "name": "姓名", "data_type": "string" },
+  { "name": "年龄", "data_type": "integer" }
 ]
 ```
 
-支持的数据类型：
-- `string`：字符串
-- `integer` / `int`：通用整数类型（向后兼容）
-- `float` / `double`：通用浮点数类型（向后兼容）
-- `boolean` / `bool`：布尔值
-- `date`：日期
-- `timestamp`：时间戳
+支持的数据类型包括 `string`、各宽度整数（`int8`/`int16`/`int32`/`int64` 及无符号版本）、浮点（`float32`/`float64`）、`decimal`、`boolean`、`date`/`time`/`timestamp`、`binary`、`uuid` 等。完整清单见 `transmuta data-gen -h`。
 
-精确数值类型：
-- `int8` / `tinyint`：8位有符号整数，范围 -128 到 127
-- `int16` / `smallint`：16位有符号整数，范围 -32,768 到 32,767
-- `int32` / `int`：32位有符号整数
-- `int64` / `bigint`：64位有符号整数
-- `uint8` / `utinyint`：8位无符号整数，范围 0 到 255
-- `uint16` / `usmallint`：16位无符号整数，范围 0 到 65,535
-- `uint32` / `uint`：32位无符号整数
-- `uint64` / `ubigint`：64位无符号整数
-- `float32` / `real`：32位单精度浮点数
-- `float64` / `double precision`：64位双精度浮点数
-- `decimal` / `numeric`：高精度小数（使用字符串存储）
-- `decimal128`：128位高精度小数
-- `decimal256`：256位高精度小数
+## 发布（维护者）
 
-时间类型：
-- `date32`：天数表示的日期（从UNIX纪元开始的天数）
-- `time32`：秒或毫秒精度的时间（一天内的时间）
-- `time64`：微秒或纳秒精度的时间
-- `interval`：时间间隔（月、日、纳秒）
-- `duration`：持续时间（纳秒）
-
-二进制和特殊类型：
-- `binary` / `varbinary`：可变长度二进制数据
-- `fixedsizebinary`：固定长度二进制数据（默认16字节）
-- `uuid`：通用唯一标识符
-- `null`：空值类型
-
-### Diff工具
-
-差异比较工具允许比较两个数据文件的内容，帮助识别它们之间的差异。
+打 git tag 即由 GitHub Actions 自动交叉编译四个平台并发布到 npm：
 
 ```bash
-# 比较两个CSV文件
-transmuta diff --input1 file1.csv --input2 file2.csv --output diff_result.json
-
-# 使用自定义设置比较不同格式的文件
-transmuta diff --input1 file1.json --input2 file2.csv --output diff_result.csv --key-columns id,name
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
-支持的选项：
-- `--input1`：第一个（基准）文件路径
-- `--input2`：第二个（比较）文件路径
-- `--output`：差异结果输出文件路径
-- `--format`：输出格式，可选，如不指定则从输出文件扩展名推断（csv、json）
-- `--key-columns`：用于匹配记录的键列名，以逗号分隔
-- `--ignore-columns`：比较时忽略的列名，以逗号分隔
-- `--tolerance`：浮点数比较的容差值，默认为0.0001
-- `--case-sensitive`：字符串比较是否区分大小写，默认为true
-
-输出结果包含以下信息：
-- 仅在左侧文件中存在的记录
-- 仅在右侧文件中存在的记录
-- 在两侧都存在但有差异的记录（以及具体差异内容）
-- 差异统计信息
+需要在仓库 Secrets 中配置 `NPM_TOKEN`。详见 `.github/workflows/release.yml`。
 
 ## 许可证
 
@@ -180,4 +160,4 @@ MIT License
 
 ## 贡献
 
-欢迎提交问题和PR！
+欢迎提交 Issue 和 PR！

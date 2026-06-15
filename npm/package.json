@@ -1,0 +1,44 @@
+{
+  "name": "transmuta",
+  "version": "0.1.0",
+  "description": "纯本地、离线的数据文件格式转换 CLI（Excel/CSV/JSON/Parquet）。一条命令完成转换，无需编写脚本或配置语言环境。",
+  "keywords": [
+    "csv",
+    "tsv",
+    "json",
+    "excel",
+    "xlsx",
+    "parquet",
+    "convert",
+    "converter",
+    "cli",
+    "data",
+    "etl",
+    "offline",
+    "local"
+  ],
+  "homepage": "https://github.com/UncertaintyDeterminesYou4ndMe/transmuta#readme",
+  "bugs": {
+    "url": "https://github.com/UncertaintyDeterminesYou4ndMe/transmuta/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UncertaintyDeterminesYou4ndMe/transmuta.git"
+  },
+  "license": "MIT",
+  "bin": {
+    "transmuta": "bin/transmuta.js"
+  },
+  "files": [
+    "bin/transmuta.js"
+  ],
+  "optionalDependencies": {
+    "transmuta-darwin-arm64": "0.1.0",
+    "transmuta-darwin-x64": "0.1.0",
+    "transmuta-linux-x64": "0.1.0",
+    "transmuta-linux-arm64": "0.1.0"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}

@@ -5,8 +5,8 @@ mod utils;
 
 use anyhow::Result;
 use clap::Parser;
-use cli::{Cli, Commands, OutputFormat, DiffOutputMode};
-use log::{error, info, warn};
+use cli::{Cli, Commands, InputFormat, OutputFormat};
+use log::{error, info};
 use std::path::Path;
 
 // 获取输出格式，优先使用用户指定的格式，否则从文件扩展名推断
@@ -17,65 +17,71 @@ fn get_output_format(format_opt: Option<OutputFormat>, output_path: &Path) -> Re
         // 尝试从文件扩展名推断格式
         None => {
             cli::guess_format_from_extension(output_path)
-                .ok_or_else(|| format!("无法从输出文件路径 '{}' 推断格式，请使用 --format 参数指定格式", 
-                                      output_path.display()))
+                .ok_or_else(|| format!(
+                    "无法从输出文件路径 '{}' 推断目标格式，请用 --to 指定（可选：csv、json、parquet）",
+                    output_path.display()))
+        }
+    }
+}
+
+// 获取源格式，优先使用用户指定的格式，否则从输入文件扩展名推断
+fn get_input_format(format_opt: Option<InputFormat>, input_path: &Path) -> Result<InputFormat, String> {
+    match format_opt {
+        Some(format) => Ok(format),
+        None => {
+            cli::guess_input_format_from_extension(input_path)
+                .ok_or_else(|| format!(
+                    "无法从输入文件路径 '{}' 推断源格式，请用 --from 指定（可选：excel、csv、json）",
+                    input_path.display()))
         }
     }
 }
 
 fn main() -> Result<()> {
-    // 初始化日志
-    env_logger::init_from_env(
-        env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info"),
-    );
-
     let cli = Cli::parse();
+
+    // 初始化日志：优先使用 RUST_LOG 环境变量，否则用 --log-level 的值（默认 info）。
+    // 日志统一写入 stderr，stdout/输出文件保持纯净，便于脚本与 AI 解析。
+    env_logger::Builder::from_env(
+        env_logger::Env::default().default_filter_or(cli.log_level.clone()),
+    )
+    .init();
     info!("传变工具 (transmuta) v{}", env!("CARGO_PKG_VERSION"));
 
     match cli.command {
-        Commands::Excel { input, output, format, batch_size, delimiter, threads, skip_rows } => {
-            // 获取输出格式，如果未指定则从文件扩展名推断
-            let format = match get_output_format(format, &output) {
+        Commands::Convert { input, output, from, to, batch_size, delimiter, threads, skip_rows, no_header } => {
+            // 推断源格式与目标格式
+            let from = match get_input_format(from, &input) {
                 Ok(f) => f,
                 Err(e) => {
                     error!("{}", e);
                     return Err(anyhow::anyhow!(e));
                 }
             };
-            
-            if let Err(e) = converters::excel::convert_excel(
-                &input, 
-                &output, 
-                &format, 
-                batch_size, 
-                delimiter, 
-                threads, 
-                skip_rows
-            ) {
-                error!("转换Excel失败: {}", e);
-                return Err(e.into());
-            }
-        }
-        Commands::Csv { input, output, format, batch_size, delimiter, threads, has_header } => {
-            // 获取输出格式，如果未指定则从文件扩展名推断
-            let format = match get_output_format(format, &output) {
+            let to = match get_output_format(to, &output) {
                 Ok(f) => f,
                 Err(e) => {
                     error!("{}", e);
                     return Err(anyhow::anyhow!(e));
                 }
             };
-            
-            if let Err(e) = converters::csv::convert_csv(
-                &input, 
-                &output, 
-                &format, 
-                batch_size, 
-                delimiter, 
-                threads,
-                has_header
-            ) {
-                error!("转换CSV失败: {}", e);
+
+            info!("转换 {} ({}) → {} ({})", input.display(), from, output.display(), to);
+
+            let result = match from {
+                InputFormat::Excel => converters::excel::convert_excel(
+                    &input, &output, &to, batch_size, delimiter, threads, skip_rows,
+                ),
+                InputFormat::Csv => converters::csv::convert_csv(
+                    &input, &output, &to, batch_size, delimiter, threads, !no_header,
+                ),
+                InputFormat::Json => converters::json::convert_json(
+                    &input, &output, &to, batch_size, delimiter, threads,
+                ),
+            };
+
+            if let Err(e) = result {
+                error!("转换失败（{} → {}）: {}", from, to, e);
                 return Err(e.into());
             }
         }

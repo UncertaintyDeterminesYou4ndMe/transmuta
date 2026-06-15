@@ -1,0 +1,21 @@
+{
+  "name": "transmuta-darwin-x64",
+  "version": "0.1.0",
+  "description": "transmuta 的 macOS (Intel / x86_64) 预编译二进制。",
+  "homepage": "https://github.com/UncertaintyDeterminesYou4ndMe/transmuta#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UncertaintyDeterminesYou4ndMe/transmuta.git"
+  },
+  "license": "MIT",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "bin"
+  ],
+  "preferUnplugged": true
+}
